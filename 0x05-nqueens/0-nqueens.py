@@ -94,8 +94,8 @@ def group_exists(group):
                 # If a match is found, increment the counter
                 if stn_pos[0] == grp_pos[0] and stn_pos[1] == grp_pos[1]:
                     i += 1
-                    # If the number of matching positions is equal to the board size,
-                    # the group is already in the solutions list
+                    # If the number of matching positions is equal to the board
+                    # size, the group is already in the solutions list
         if i == n:
             return True
         # If no match is found, the group is not in the solutions list
