@@ -1,96 +1,72 @@
 #!/usr/bin/python3
-
+"""
+Module 0-nqueens
+A program that solves the N queens problem
+"""
 import sys
 
-if len(sys.argv) != 2:
+if len(sys.argv) < 2:
     print("Usage: nqueens N")
-    exit(1)
+    sys.exit(1)
 
-if not sys.argv[1].isnumeric():
+try:
+    num = int(sys.argv[1])
+except ValueError:
     print("N must be a number")
-    exit(1)
+    sys.exit(1)
 
-N = queens = int(sys.argv[1])
-if N < 4:
+if not (num >= 4):
     print("N must be at least 4")
-    exit(1)
+    sys.exit(1)
 
 
-def CrossOut(g, cell, dimension):
-    Grid = [x[:] for x in g]
-    Grid[cell[0]][cell[1]] = 1
+def solveNQueens(n):
+    """Solution for n queens"""
+    col = set()  # keep track of used columns
+    pos = set()  # (r + c) keep track of used positive diagonals
+    neg = set()  # (r - c) keep track of used negative diagonals
 
-    # Horizontal
-    for i in range(dimension):
-        if Grid[cell[0]][i] != 1:
-            Grid[cell[0]][i] = -1
+    res = []  # final result
 
-    # Vertical
-    for j in range(dimension):
-        if Grid[j][cell[1]] != 1:
-            Grid[j][cell[1]] = -1
+    board = [[] for n in range(n)]  # create empy board
 
-    # Right Diagonal
-    if cell[1] < dimension - 1:
-        for x in range(1, dimension - cell[1]):
-            try:
-                Grid[cell[0] + x][cell[1] + x] = -1
-            except BaseException:
-                pass
-            try:
-                if cell[0] - x >= 0:
-                    Grid[cell[0] - x][cell[1] + x] = -1
-            except BaseException:
-                pass
+    def backtrack(row):
+        """function for recursion"""
+        # means we've reached the last row
+        if row == n:
+            # get copy of current solution(current board)
+            copy = board.copy()
+            res.append(copy)
+            return
 
-    # Left Diagonal
-    if cell[1] > 0:
-        for x in range(1, cell[1] + 1):
-            try:
-                if cell[1] - x >= 0:
-                    Grid[cell[0] + x][cell[1] - x] = -1
-            except BaseException:
-                pass
-            try:
-                if (cell[0] - x >= 0) and (cell[1] - x >= 0):
-                    Grid[cell[0] - x][cell[1] - x] = -1
-            except BaseException:
-                pass
+        # for every column
+        for c in range(n):
+            # if we find that the column or diagonals are used, then skip
+            if c in col or (row + c) in pos or (row - c) in neg:
+                continue
 
-    return Grid
+            # register found columns and diagonals
+            col.add(c)
+            pos.add(row + c)
+            neg.add(row - c)
 
+            board[row] = [row, c]
 
-def CountSpots(grid, dimension):
-    count = 0
-    for i in range(dimension):
-        for j in range(dimension):
-            if grid[i][j] == 0:
-                count += 1
-    return count
+            # move to next row
+            backtrack(row + 1)
+
+            # finally undo
+            col.remove(c)
+            pos.remove(row + c)
+            neg.remove(row - c)
+            board[row] = []
+
+    backtrack(0)
+
+    return res
 
 
-def get_answer(grid, dimension):
-    spots = []
-    for i in range(dimension):
-        for j in range(dimension):
-            if grid[i][j] == 1:
-                spots.append([i, j])
-    return spots
-
-
-def solve(grid, row, col, dimension, queens):
-    attempt = CrossOut(grid, [row, col], dimension)
-    i = row + 1
-    queens -= 1
-    if i < dimension and CountSpots(grid, dimension) > queens:
-        for j in range(dimension):
-            if attempt[i][j] == 0:
-                solve(attempt, i, j, dimension, queens)
-                spots = get_answer(attempt, dimension)
-    if len(spots) == dimension:
-        print(spots)
-
-
-initial_grid = [[0] * N for i in range(N)]
-for col in range(N):
-    solve(initial_grid, 0, col, N, N)
+if __name__ == "__main__":
+    boards = solveNQueens(num)
+    for board in boards:
+        print(board)
