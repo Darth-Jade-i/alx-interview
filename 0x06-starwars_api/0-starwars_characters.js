@@ -31,8 +31,7 @@ if (process.argv.length > 2) {
 		});
 	    }));
 
-	// Wait for all Promises to resolve and log the names of the characters,
-	//separated by new lines
+	// Wait for all Promises to resolve and log the names of the characters, separated by new lines
 	Promise.all(charactersName)
 	    .then(names => console.log(names.join('\n')))
 	    .catch(allErr => console.log(allErr));
