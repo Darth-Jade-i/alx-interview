@@ -1,51 +1,50 @@
-from collections import defaultdict
+#!/usr/bin/python3
+"""
+log parsing
+"""
+
+import sys
+import re
 
 
-def is_valid_line(line):
-    """Checks if the line follows the expected format."""
-  try:
-      # Split the line based on spaces
-    parts = line.split()
-    # Check if all expected parts exist
-    return len(parts) == 7 and parts[0].count(".") == 3 and int(parts[4]) and int(parts[6])
-  except ValueError:
-    return False
-
-
-def process_line(line, stats):
-    """Processes a valid line and updates statistics."""
-    status_code = int(line.split()[4])
-    file_size = int(line.split()[6])
-    stats["total_size"] += file_size
-    stats["status_codes"][status_code] += 1
-
-
-def print_stats(stats):
-    """Prints the current statistics."""
-    print(f"Total file size: {stats['total_size']}")
-    print("Number of lines by status code:")
-  for code, count in sorted(stats["status_codes"].items()):
-      print(f"{code}: {count}")
-
-
-def main():
-    """Main function that reads lines and prints statistics."""
-    stats = {"total_size": 0, "status_codes": defaultdict(int)}
-    line_count = 0
-  try:
-    for line in sys.stdin:
-        line = line.rstrip()  # Remove trailing newline
-      if is_valid_line(line):
-          process_line(line, stats)
-          line_count += 1
-        if line_count % 10 == 0:
-            print_stats(stats)
-            stats = {"total_size": 0, "status_codes": defaultdict(int)}
-            line_count = 0
-  except KeyboardInterrupt:
-      print_stats(stats)
-      print("\nInterrupted by user.")
+def output(log: dict) -> None:
+    """
+    helper function to display stats
+    """
+    print("File size: {}".format(log["file_size"]))
+    for code in sorted(log["code_frequency"]):
+        if log["code_frequency"][code]:
+            print("{}: {}".format(code, log["code_frequency"][code]))
 
 
 if __name__ == "__main__":
-    main()
+    regex = re.compile(
+        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3} - \[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}.\d+\] "GET /projects/260 HTTP/1.1" (.{3}) (\d+)')  # nopep8
+
+    line_count = 0
+    log = {}
+    log["file_size"] = 0
+    log["code_frequency"] = {
+        str(code): 0 for code in [
+            200, 301, 400, 401, 403, 404, 405, 500]}
+
+    try:
+        for line in sys.stdin:
+            line = line.strip()
+            match = regex.fullmatch(line)
+            if (match):
+                line_count += 1
+                code = match.group(1)
+                file_size = int(match.group(2))
+
+                # File size
+                log["file_size"] += file_size
+
+                # status code
+                if (code.isdecimal()):
+                    log["code_frequency"][code] += 1
+
+                if (line_count % 10 == 0):
+                    output(log)
+    finally:
+        output(log)
