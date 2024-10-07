@@ -1,39 +1,45 @@
 #!/usr/bin/node
 
-// Import the 'request' library
 const request = require('request');
 
-// Define constant with the base URL of the Star Wars API
-const API_URL = 'https://swapi-api.alx-tools.com/api';
-
-// Check if the number of command line arguments is greater than 2
-if (process.argv.length > 2) {
-  // Make a request to the film resource for the specified film ID
-  request(`${API_URL}/films/${process.argv[2]}/`, (err, _, body) => {
-    // If an error occurred during the request, log the error
-    if (err) {
-	    console.log(err);
-    }
-    // Get the characters URL from the film's response body
-    const charactersURL = JSON.parse(body).characters;
-
-    // Create an array of Promises that resolve with the names of the characters
-    const charactersName = charactersURL.map(
-	    url => new Promise((resolve, reject) => {
-        // Make a request to the character resource
-        request(url, (promiseErr, __, charactersReqBody) => {
-		    // If an error occurred during the request, reject the Promise with the error
-		    if (promiseErr) {
-            reject(promiseErr);
-		    }
-		    // Resolve the Promise with the name of the character
-		    resolve(JSON.parse(charactersReqBody).name);
-        });
-	    }));
-
-    // Wait for all Promises to resolve and log the names of the characters, separated by new lines
-    Promise.all(charactersName)
-	    .then(names => console.log(names.join('\n')))
-	    .catch(allErr => console.log(allErr));
-  });
+if (process.argv.length < 3) {
+  console.error('Usage: ./0-starwars_characters.js <movie_id>'); // where value of `movie_id` is 3
+  process.exit(1);
 }
+
+const movieId = process.argv[2];
+const url = `https://swapi-api.hbtn.io/api/films/${movieId}/`; // https://swapi-api.alx-tools.com/api/films/${movieId}/
+
+request(url, (error, response, body) => {
+  if (error) {
+    console.error(`Error: ${error}`);
+    return;
+  }
+
+  const movie = JSON.parse(body);
+  const characterUrls = movie.characters;
+
+  const characterPromises = characterUrls.map((characterUrl) => {
+    return new Promise((resolve, reject) => {
+      request(characterUrl, (error, response, body) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        const character = JSON.parse(body);
+        resolve(character.name);
+      });
+    });
+  });
+
+  Promise.all(characterPromises)
+    .then((characters) => {
+      characters.forEach((character) => { // for (const character of characters) {}
+        console.log(character);
+      });
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+});
